@@ -1,0 +1,16 @@
+# Foundry project skeleton for Aevum Pay.
+# TODO: add Solidity sources, tests, and deploy scripts during the build window
+# (from 2026-11-16 06:00 UTC). No contract logic lives in this repository yet.
+# Chain ID of QDay Aevum Testnet: 44005 (0xABE5).
+# Do not put a private key in this file.
+
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc = "0.8.28"
+
+[rpc_endpoints]
+aevum_testnet = "https://rpc-test.qday.info"

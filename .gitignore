@@ -1,0 +1,44 @@
+# Java / Maven
+target/
+*.class
+hs_err_pid*
+replay_pid*
+
+# Foundry
+out/
+cache/
+broadcast/
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets. .env.example is the only env file that belongs in git.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore

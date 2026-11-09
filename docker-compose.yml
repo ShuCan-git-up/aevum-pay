@@ -1,0 +1,29 @@
+# Aevum Pay service skeleton.
+# TODO: add Dockerfiles and a runnable demo during the build window
+# (from 2026-11-16 06:00 UTC). `docker compose up` fails until those
+# Dockerfiles exist. This file does not start a payment flow.
+
+name: aevum-pay
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      AEVUM_RPC_URL: ${AEVUM_RPC_URL:-}
+      AEVUM_WS_URL: ${AEVUM_WS_URL:-}
+      AEVUM_CHAIN_ID: ${AEVUM_CHAIN_ID:-}
+      AEVUM_PRIVATE_KEY: ${AEVUM_PRIVATE_KEY:-}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+    ports:
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
