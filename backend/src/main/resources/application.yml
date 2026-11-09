@@ -1,0 +1,17 @@
+# Skeleton configuration for Aevum Pay.
+# TODO: bind these properties in application code during the build window
+# (from 2026-11-16 06:00 UTC). This file must not contain literal RPC URLs,
+# chain ids, or private keys.
+
+spring:
+  application:
+    name: aevum-pay
+
+server:
+  port: ${SERVER_PORT:8080}
+
+aevum:
+  rpc-url: ${AEVUM_RPC_URL:}
+  ws-url: ${AEVUM_WS_URL:}
+  chain-id: ${AEVUM_CHAIN_ID:}
+  private-key: ${AEVUM_PRIVATE_KEY:}
