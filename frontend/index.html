@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aevum Pay · 商家后台</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="/">
+        <div class="mark">Ae</div>
+        <div>
+          <h1>Aevum Pay</h1>
+          <p>发票支付 / Non-custodial tUSD8 invoices</p>
+        </div>
+      </a>
+      <div class="row">
+        <div class="pill"><strong id="network">…</strong></div>
+        <div class="pill" id="sync">同步中</div>
+        <button id="connect" type="button">连接 OKX / 钱包</button>
+      </div>
+    </header>
+    <p class="hint">合约 <span class="mono" id="contract"></span> · 账户 <span class="mono" id="account">未连接</span></p>
+    <div id="banner" class="banner" hidden></div>
+    <div class="grid">
+      <section class="card">
+        <h2>开一张发票</h2>
+        <p class="hint">用你自己的钱包签名。tUSD8 付款时直接进你的地址，合约不保管资金。</p>
+        <label>金额 tUSD8 <span>/ amount</span></label>
+        <input id="amount" type="text" inputmode="decimal" value="10" />
+        <label>截止时间 <span>/ due</span></label>
+        <input id="due" type="datetime-local" />
+        <label>订单号 <span>/ order id，可空。相同订单号不能重复开票</span></label>
+        <input id="order" type="text" placeholder="ORD-1001" />
+        <label>指定付款人 <span>/ payer，留空则谁都可以付，第一笔锁定</span></label>
+        <input id="payer" type="text" placeholder="0x…" />
+        <label class="check"><input id="partial" type="checkbox" /> 允许分期 / allow partial</label>
+        <div class="actions"><button id="create" type="button">签名并创建 / Create invoice</button></div>
+      </section>
+      <section class="card">
+        <h2>后端代开票</h2>
+        <p class="hint">操作员只能替你开票和取消未付款发票。先授权，再用 API Key 让你的系统调用 REST。</p>
+        <p>操作员地址<br /><strong class="mono" id="operator">…</strong></p>
+        <div class="actions"><button id="authorize" class="secondary" type="button">授权操作员 / setOperator</button></div>
+        <label>店铺名 <span>/ shop name</span></label>
+        <input id="shop" type="text" value="我的店铺" />
+        <label>Webhook URL <span>/ 可选</span></label>
+        <input id="webhook" type="url" placeholder="https://merchant.example/hooks/aevum" />
+        <div class="actions"><button id="register" class="secondary" type="button">签名注册并领取 API Key</button></div>
+        <div id="owner-tools" hidden>
+          <h2>Owner</h2>
+          <p class="hint">只能暂停和设置不超过 1% 的手续费。不能换币，不能动别人的钱。</p>
+          <div class="actions">
+            <button id="pause" class="secondary" type="button">暂停</button>
+            <button id="unpause" class="secondary" type="button">恢复</button>
+          </div>
+          <label>手续费 bps <span>/ 100 = 1%</span></label>
+          <input id="fee-bps" type="number" min="0" max="100" value="0" />
+          <label>收费地址</label>
+          <input id="fee-to" type="text" placeholder="0x…" />
+          <div class="actions"><button id="set-fee" class="secondary" type="button">设置手续费</button></div>
+        </div>
+      </section>
+    </div>
+    <section class="card" style="margin-top:16px" id="wallet-tools">
+      <h2>我的发票</h2>
+      <p class="hint">状态来自后端索引，几秒内会跟上链上结果。</p>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>状态</th><th>已付 / 应付</th><th>付款人</th><th></th></tr>
+        </thead>
+        <tbody id="invoices"><tr><td colspan="5">连接钱包后显示。</td></tr></tbody>
+      </table>
+    </section>
+    <footer class="note">Aevum testnet chainId 44005 · 结算币 tUSD8 · 6 位小数 · 非托管 approve + pay</footer>
+  </div>
+  <dialog id="qr-dialog">
+    <h2>支付二维码</h2>
+    <div id="qr"></div>
+    <p class="mono" id="qr-url"></p>
+    <form method="dialog"><button type="submit">关闭</button></form>
+  </dialog>
+  <dialog id="secret-dialog">
+    <h2>请马上复制</h2>
+    <pre id="secret" class="mono"></pre>
+    <form method="dialog"><button type="submit">我已保存</button></form>
+  </dialog>
+  <script src="/vendor/ethers.umd.min.js"></script>
+  <script src="/vendor/qrcode.min.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
