@@ -1,0 +1,86 @@
+# 腾讯云上和现有 Caddy 共用 Docker 网络 private-room-net。
+# 本文件不占用宿主机 80/443。Caddy 反代容器名 aevum-pay-app 的 8080 端口。
+# 调试时如果要从宿主机直接访问，给 app 临时加一行：ports: ["8080:8080"]
+
+name: aevum-pay
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: aevum-pay-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aevumpay}
+      POSTGRES_USER: ${POSTGRES_USER:-aevumpay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - effective_cache_size=64MB
+      - -c
+      - wal_buffers=1MB
+    mem_limit: 192m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aevumpay} -d ${POSTGRES_DB:-aevumpay}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aevum-pay:local
+    container_name: aevum-pay-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-aevumpay}
+      DATABASE_USER: ${POSTGRES_USER:-aevumpay}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      AEVUM_RPC_URL: ${AEVUM_RPC_URL:-https://rpc-test.qday.info}
+      AEVUM_PUBLIC_RPC_URL: ${AEVUM_PUBLIC_RPC_URL:-}
+      AEVUM_CHAIN_ID: ${AEVUM_CHAIN_ID:-44005}
+      CONTRACT_ADDRESS: ${CONTRACT_ADDRESS:-}
+      TUSD8_ADDRESS: ${TUSD8_ADDRESS:-0x456569838f1d43009A91ebA4263147Afd7233483}
+      START_BLOCK: ${START_BLOCK:-0}
+      EXPLORER_URL: ${EXPLORER_URL:-https://explorer-test.qday.info}
+      CHAIN_CONFIRMATIONS: ${CHAIN_CONFIRMATIONS:-2}
+      CHAIN_POLL_INTERVAL_MS: ${CHAIN_POLL_INTERVAL_MS:-3000}
+      CHAIN_LOG_BATCH_BLOCKS: ${CHAIN_LOG_BATCH_BLOCKS:-2000}
+      CHAIN_REORG_DEPTH: ${CHAIN_REORG_DEPTH:-10}
+      AEVUM_OPERATOR_PRIVATE_KEY: ${AEVUM_OPERATOR_PRIVATE_KEY:-}
+      AEVUM_OPERATOR_KEYSTORE: ${AEVUM_OPERATOR_KEYSTORE:-}
+      AEVUM_OPERATOR_KEYSTORE_PASSWORD: ${AEVUM_OPERATOR_KEYSTORE_PASSWORD:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      WEBHOOK_DISPATCH_INTERVAL_MS: ${WEBHOOK_DISPATCH_INTERVAL_MS:-2000}
+      WEBHOOK_RETRY_SECONDS: ${WEBHOOK_RETRY_SECONDS:-60,300,1800,7200,43200}
+      RECONCILE_INTERVAL_MS: ${RECONCILE_INTERVAL_MS:-600000}
+    mem_limit: 480m
+    networks:
+      - internal
+      - private-room-net
+
+networks:
+  internal:
+    driver: bridge
+  private-room-net:
+    external: true
+
+volumes:
+  pgdata:

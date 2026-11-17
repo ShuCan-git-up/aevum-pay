@@ -1,0 +1,58 @@
+# 全部敏感值来自环境变量。这个文件可以提交。
+spring:
+  application:
+    name: aevum-pay
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/aevumpay}
+    username: ${DATABASE_USER:aevumpay}
+    password: ${DATABASE_PASSWORD:aevumpay}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+aevum:
+  rpc-url: ${AEVUM_RPC_URL:https://rpc-test.qday.info}
+  public-rpc-url: ${AEVUM_PUBLIC_RPC_URL:}
+  chain-id: ${AEVUM_CHAIN_ID:44005}
+  contract-address: ${CONTRACT_ADDRESS:}
+  token-address: ${TUSD8_ADDRESS:0x456569838f1d43009A91ebA4263147Afd7233483}
+  token-decimals: 6
+  explorer-url: ${EXPLORER_URL:https://explorer-test.qday.info}
+  start-block: ${START_BLOCK:0}
+  confirmations: ${CHAIN_CONFIRMATIONS:2}
+  poll-interval-ms: ${CHAIN_POLL_INTERVAL_MS:3000}
+  log-batch-blocks: ${CHAIN_LOG_BATCH_BLOCKS:2000}
+  reorg-depth: ${CHAIN_REORG_DEPTH:10}
+  operator-private-key: ${AEVUM_OPERATOR_PRIVATE_KEY:}
+  operator-keystore: ${AEVUM_OPERATOR_KEYSTORE:}
+  operator-keystore-password: ${AEVUM_OPERATOR_KEYSTORE_PASSWORD:}
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+  webhook-dispatch-interval-ms: ${WEBHOOK_DISPATCH_INTERVAL_MS:2000}
+  webhook-retry-seconds: ${WEBHOOK_RETRY_SECONDS:60,300,1800,7200,43200}
+  reconcile-interval-ms: ${RECONCILE_INTERVAL_MS:600000}
+  tx-receipt-attempts: ${TX_RECEIPT_ATTEMPTS:40}
+  tx-receipt-poll-ms: ${TX_RECEIPT_POLL_MS:1000}
+
+logging:
+  level:
+    io.aevumpay: INFO
+    org.hibernate.SQL: WARN

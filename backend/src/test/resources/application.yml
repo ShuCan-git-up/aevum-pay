@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:aevumpay;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: sa
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+aevum:
+  rpc-url: http://127.0.0.1:1
+  chain-id: 31337
+  contract-address: ""
+  token-address: "0x456569838f1d43009A91ebA4263147Afd7233483"
+  explorer-url: http://explorer.local
+  start-block: 0
+  confirmations: 0
+  poll-interval-ms: 3600000
+  webhook-dispatch-interval-ms: 3600000
+  reconcile-interval-ms: 3600000
+  webhook-retry-seconds: "1,2,4"
+  public-base-url: http://localhost:8080
+  operator-private-key: ""

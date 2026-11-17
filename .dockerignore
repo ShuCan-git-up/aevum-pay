@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+backend/target
+contracts/out
+contracts/cache
+contracts/broadcast
+contracts/lib
+**/*.keystore
+*.md
+!README.md
