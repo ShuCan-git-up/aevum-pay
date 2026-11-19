@@ -1,4 +1,4 @@
-/* 浏览器侧只签名，不把私钥交给后端。类似前端自己拿用户的 HttpSession，服务器只收结果。 */
+/* The browser only signs. Private keys stay in the wallet; the backend receives results, not keys. */
 window.Aevum = (() => {
   const ERC20_ABI = [
     "function approve(address spender, uint256 amount) returns (bool)",
@@ -9,19 +9,19 @@ window.Aevum = (() => {
   ];
 
   const ERROR_TEXT = {
-    InvoiceExpired: "发票已过期 / Invoice expired",
-    InvoiceNotPayable: "这张发票不能再付 / Invoice is not payable",
-    NotPayer: "这张发票指定了别的付款人 / You are not the payer",
-    Overpayment: "金额超过剩余应付 / Amount exceeds the remaining balance",
-    PartialNotAllowed: "这张发票必须一次付清 / Partial payment is not allowed",
-    InvoiceNotFound: "找不到这张发票 / Invoice not found",
-    NotMerchant: "只有商家本人可以操作 / Merchant only",
-    NotMerchantOrOperator: "只有商家或操作员可以取消 / Merchant or operator only",
-    InvoiceNotCancellable: "已经收过款，不能取消 / Cannot cancel after a payment",
-    NotRefundable: "没有可退的金额 / Nothing to refund",
-    OverRefund: "退款超过已付金额 / Refund exceeds the amount paid",
-    EnforcedPause: "合约已暂停付款 / Payments are paused",
-    InvalidAmount: "金额不合法 / Invalid amount"
+    InvoiceExpired: "This invoice has expired",
+    InvoiceNotPayable: "This invoice can no longer be paid",
+    NotPayer: "This invoice is locked to a different payer",
+    Overpayment: "The amount is more than the remaining balance",
+    PartialNotAllowed: "This invoice must be paid in full",
+    InvoiceNotFound: "Invoice not found",
+    NotMerchant: "Only the merchant can do this",
+    NotMerchantOrOperator: "Only the merchant or operator can cancel",
+    InvoiceNotCancellable: "This invoice cannot be cancelled after a payment",
+    NotRefundable: "There is nothing to refund",
+    OverRefund: "The refund is more than the amount paid",
+    EnforcedPause: "Payments are paused",
+    InvalidAmount: "Invalid amount"
   };
 
   let configPromise;
@@ -38,7 +38,7 @@ window.Aevum = (() => {
   async function config() {
     if (!configPromise) {
       configPromise = fetch("/api/v1/public/config").then((response) => {
-        if (!response.ok) throw new Error("无法读取网络配置 / config unavailable");
+        if (!response.ok) throw new Error("Network configuration is unavailable");
         return response.json();
       });
     }
@@ -55,7 +55,7 @@ window.Aevum = (() => {
   async function connect() {
     const injected = provider();
     if (!injected) {
-      throw new Error("没有检测到钱包。请安装 OKX Wallet 或任何 EIP-1193 钱包 / No injected wallet");
+      throw new Error("No wallet found. Install OKX Wallet or any EIP-1193 wallet.");
     }
     const accounts = await injected.request({ method: "eth_requestAccounts" });
     await ensureChain(injected);
@@ -87,7 +87,7 @@ window.Aevum = (() => {
   async function contracts(signerOrProvider) {
     const cfg = await config();
     const paymentAbi = await abi();
-    if (!cfg.contractAddress) throw new Error("后端还没配置 CONTRACT_ADDRESS");
+    if (!cfg.contractAddress) throw new Error("CONTRACT_ADDRESS is not configured on the backend");
     return {
       cfg,
       payment: new ethers.Contract(cfg.contractAddress, paymentAbi, signerOrProvider),
@@ -98,9 +98,9 @@ window.Aevum = (() => {
 
   function parseAmount(human, decimals) {
     const text = String(human).trim();
-    if (!/^\d+(\.\d+)?$/.test(text)) throw new Error("金额格式不对 / Bad amount");
+    if (!/^\d+(\.\d+)?$/.test(text)) throw new Error("Enter a valid amount");
     const [whole, frac = ""] = text.split(".");
-    if (frac.length > decimals) throw new Error("小数位超过 " + decimals);
+    if (frac.length > decimals) throw new Error("Too many decimal places (max " + decimals + ")");
     const padded = (frac + "0".repeat(decimals)).slice(0, decimals);
     return BigInt(whole) * 10n ** BigInt(decimals) + BigInt(padded || "0");
   }
@@ -119,6 +119,19 @@ window.Aevum = (() => {
     return address.slice(0, 6) + "…" + address.slice(-4);
   }
 
+  function midEllipsis(value, head = 10, tail = 8) {
+    const text = String(value || "");
+    if (text.length <= head + tail + 1) return text;
+    return text.slice(0, head) + "…" + text.slice(-tail);
+  }
+
+  function formatTime(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString();
+  }
+
   function explain(error, iface) {
     const data = error?.data || error?.error?.data || error?.info?.error?.data;
     if (iface && typeof data === "string" && data.startsWith("0x")) {
@@ -126,16 +139,16 @@ window.Aevum = (() => {
         const parsed = iface.parseError(data);
         if (parsed && ERROR_TEXT[parsed.name]) return ERROR_TEXT[parsed.name];
         if (parsed) return parsed.name;
-      } catch (_) { /* 不是我们的 custom error */ }
+      } catch (_) { /* not one of our custom errors */ }
     }
     if (error?.code === 4001 || String(error?.message || "").toLowerCase().includes("user rejected")) {
-      return "你取消了签名 / Signature rejected";
+      return "You rejected the signature";
     }
-    return error?.shortMessage || error?.reason || error?.message || "交易失败 / Transaction failed";
+    return error?.shortMessage || error?.reason || error?.message || "The transaction failed";
   }
 
   function explorerTx(cfg, hash) {
-    if (!cfg.explorerUrl || !hash) return "";
+    if (!cfg?.explorerUrl || !hash) return "";
     return cfg.explorerUrl.replace(/\/$/, "") + "/tx/" + hash;
   }
 
@@ -143,8 +156,62 @@ window.Aevum = (() => {
     return "/pay/" + id;
   }
 
+  function receiptPath(id) {
+    return "/receipt/" + id;
+  }
+
+  async function copyText(value, button) {
+    try {
+      await navigator.clipboard.writeText(value);
+      if (button) {
+        const previous = button.textContent;
+        button.textContent = "Copied";
+        setTimeout(() => { button.textContent = previous; }, 1200);
+      }
+    } catch (_) {
+      if (button) button.textContent = "Copy failed";
+    }
+  }
+
+  function renderTx(target, cfg, hash, label) {
+    if (!target) return;
+    target.replaceChildren();
+    if (!hash) return;
+    if (label) {
+      const prefix = document.createElement("span");
+      prefix.textContent = label + " ";
+      target.append(prefix);
+    }
+    const wrap = document.createElement("span");
+    wrap.className = "tx-hash";
+    const href = explorerTx(cfg, hash);
+    const display = midEllipsis(hash);
+    if (href) {
+      const link = document.createElement("a");
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.title = hash;
+      link.textContent = display;
+      wrap.append(link);
+    } else {
+      const text = document.createElement("span");
+      text.title = hash;
+      text.textContent = display;
+      wrap.append(text);
+    }
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "copy";
+    copy.textContent = "Copy";
+    copy.addEventListener("click", () => copyText(hash, copy));
+    wrap.append(copy);
+    target.append(wrap);
+  }
+
   return {
     provider, config, connect, ensureChain, contracts, parseAmount, formatAmount,
-    short, explain, explorerTx, payPath, ERROR_TEXT
+    short, midEllipsis, formatTime, explain, explorerTx, payPath, receiptPath,
+    copyText, renderTx, ERROR_TEXT
   };
 })();

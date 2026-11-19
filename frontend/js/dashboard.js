@@ -12,10 +12,10 @@ function banner(text, kind) {
 async function boot() {
   state.cfg = await Aevum.config();
   $("network").textContent = state.cfg.networkName + " · " + state.cfg.chainId;
-  $("contract").textContent = state.cfg.contractAddress || "未配置";
-  $("operator").textContent = state.cfg.operatorAddress || "后端没有配置操作员私钥 / no operator key";
+  $("contract").textContent = state.cfg.contractAddress || "Not configured";
+  $("operator").textContent = state.cfg.operatorAddress || "No operator key is configured on the backend";
   if (!state.cfg.contractAddress) {
-    banner("合约地址还没配置。部署后设置 CONTRACT_ADDRESS 再刷新。 / Contract address is empty.", "error");
+    banner("Contract address is not configured. Set CONTRACT_ADDRESS and refresh.", "error");
   }
   const due = new Date(Date.now() + 7 * 86400000);
   const local = new Date(due.getTime() - due.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -37,7 +37,7 @@ async function onConnect() {
     banner("");
     state.session = await Aevum.connect();
     $("account").textContent = state.session.address;
-    $("connect").textContent = "已连接 / Connected";
+    $("connect").textContent = "Connected";
     $("wallet-tools").hidden = false;
     await refreshOwner();
     await refreshInvoices();
@@ -55,7 +55,7 @@ async function refreshOwner() {
     const owner = (await payment.owner()).toLowerCase();
     $("owner-tools").hidden = owner !== state.session.address.toLowerCase();
     const operator = state.cfg.operatorAddress;
-    $("operator").textContent = operator || "后端没有配置操作员私钥 / no operator key";
+    $("operator").textContent = operator || "No operator key is configured on the backend";
   } catch (error) {
     console.warn(error);
   }
@@ -65,9 +65,10 @@ async function refreshSync() {
   try {
     const sync = await fetch("/api/v1/public/sync").then((response) => response.json());
     const lag = sync.lag == null ? "—" : sync.lag;
-    $("sync").textContent = "同步游标 " + (sync.cursor ?? "—") + " · 落后 " + lag + " 块";
+    const unit = Number(sync.lag) === 1 ? "block" : "blocks";
+    $("sync").textContent = "Sync cursor " + (sync.cursor ?? "—") + " · " + lag + " " + unit + " behind";
   } catch (_) {
-    $("sync").textContent = "同步状态不可用";
+    $("sync").textContent = "Sync status unavailable";
   }
 }
 
@@ -78,7 +79,7 @@ async function refreshInvoices() {
   const body = $("invoices");
   body.innerHTML = "";
   if (!rows.length) {
-    body.innerHTML = "<tr><td colspan='5'>还没有链上发票。创建后等索引器确认，通常几秒。</td></tr>";
+    body.innerHTML = "<tr><td colspan='5'>No on-chain invoices yet. After you create one, the indexer usually confirms it within a few seconds.</td></tr>";
     return;
   }
   for (const row of rows) {
@@ -93,10 +94,10 @@ async function refreshInvoices() {
       <td></td>`;
     const cell = tr.lastElementChild;
     if (link) {
-      cell.append(button("支付链接", () => copyLink(link)));
-      cell.append(button("二维码", () => showQr(location.origin + link)));
-      if (canCancel(row)) cell.append(button("取消", () => onCancel(row.chainInvoiceId)));
-      if (canRefund(row)) cell.append(button("退款", () => onRefund(row)));
+      cell.append(button("Pay link", () => copyLink(link)));
+      cell.append(button("QR code", () => showQr(location.origin + link)));
+      if (canCancel(row)) cell.append(button("Cancel", () => onCancel(row.chainInvoiceId)));
+      if (canRefund(row)) cell.append(button("Refund", () => onRefund(row)));
     }
     body.append(tr);
   }
@@ -126,12 +127,12 @@ async function onCreate() {
   requireWallet();
   const { payment, iface, cfg } = await Aevum.contracts(state.session.signer);
   const amount = Aevum.parseAmount($("amount").value, cfg.tokenDecimals);
-  if (amount <= 0n) throw new Error("金额要大于 0");
+  if (amount <= 0n) throw new Error("Amount must be greater than 0");
   const dueAt = Math.floor(new Date($("due").value).getTime() / 1000);
   const payer = $("payer").value.trim();
   const orderId = $("order").value.trim();
   const orderRef = orderId ? ethers.keccak256(ethers.toUtf8Bytes(orderId)) : ethers.ZeroHash;
-  banner("等待钱包签名开票… / Waiting for signature");
+  banner("Waiting for you to sign the invoice…");
   const tx = await payment.createInvoice(payer || ethers.ZeroAddress, amount, dueAt, $("partial").checked, orderRef);
   const receipt = await tx.wait();
   let id = null;
@@ -139,21 +140,21 @@ async function onCreate() {
     try {
       const parsed = iface.parseLog(log);
       if (parsed && parsed.name === "InvoiceCreated") id = parsed.args.id.toString();
-    } catch (_) { /* 别的合约的 log */ }
+    } catch (_) { /* log from another contract */ }
   }
   const href = id ? location.origin + Aevum.payPath(id) : "";
-  banner("已上链" + (id ? "，发票 #" + id + " " + href : "") + " tx " + tx.hash, "ok");
+  banner("On chain" + (id ? ", invoice #" + id + " " + href : "") + ". tx " + tx.hash, "ok");
   await refreshInvoices();
 }
 
 async function onAuthorize() {
   requireWallet();
-  if (!state.cfg.operatorAddress) throw new Error("后端没有公布操作员地址");
+  if (!state.cfg.operatorAddress) throw new Error("The backend has not published an operator address");
   const { payment } = await Aevum.contracts(state.session.signer);
-  banner("授权操作员只允许代开票和取消，碰不到资金。");
+  banner("Authorizing the operator only allows it to create invoices and cancel unpaid ones. It cannot touch funds.");
   const tx = await payment.setOperator(state.cfg.operatorAddress, true);
   await tx.wait();
-  banner("已授权 " + state.cfg.operatorAddress, "ok");
+  banner("Operator authorized: " + state.cfg.operatorAddress, "ok");
 }
 
 async function onRegister() {
@@ -173,8 +174,8 @@ async function onRegister() {
     })
   });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.message || "注册失败");
-  $("secret").textContent = "API Key（只显示一次）\n" + body.apiKey + "\n\nWebhook secret\n" + body.webhookSecret;
+  if (!response.ok) throw new Error(body.message || "Registration failed");
+  $("secret").textContent = "API key (shown only once)\n" + body.apiKey + "\n\nWebhook secret\n" + body.webhookSecret;
   $("secret-dialog").showModal();
 }
 
@@ -182,24 +183,24 @@ async function onCancel(id) {
   const { payment } = await Aevum.contracts(state.session.signer);
   const tx = await payment.cancelInvoice(id);
   await tx.wait();
-  banner("取消交易已发送 " + tx.hash, "ok");
+  banner("Cancel transaction sent " + tx.hash, "ok");
   await refreshInvoices();
 }
 
 async function onRefund(row) {
-  const human = window.prompt("退款金额 tUSD8 / Refund amount", Aevum.formatAmount(
+  const human = window.prompt("Refund amount (tUSD8)", Aevum.formatAmount(
     BigInt(row.paidAmount) - BigInt(row.refundedAmount), state.cfg.tokenDecimals));
   if (!human) return;
   const amount = Aevum.parseAmount(human, state.cfg.tokenDecimals);
   const { payment, token, cfg } = await Aevum.contracts(state.session.signer);
   const allowance = await token.allowance(state.session.address, cfg.contractAddress);
   if (allowance < amount) {
-    banner("先授权 tUSD8，再退款。");
+    banner("Approve tUSD8 first, then refund.");
     await (await token.approve(cfg.contractAddress, amount)).wait();
   }
   const tx = await payment.refund(row.chainInvoiceId, amount);
   await tx.wait();
-  banner("退款已发送 " + tx.hash, "ok");
+  banner("Refund sent " + tx.hash, "ok");
   await refreshInvoices();
 }
 
@@ -216,13 +217,13 @@ async function onSetFee() {
   const { payment } = await Aevum.contracts(state.session.signer);
   const tx = await payment.setFee(bps, recipient);
   await tx.wait();
-  banner("手续费已更新，上限 1%。 " + tx.hash, "ok");
+  banner("Fee updated (capped at 1%). " + tx.hash, "ok");
 }
 
 function copyLink(path) {
   const url = location.origin + path;
   navigator.clipboard.writeText(url);
-  banner("已复制 " + url, "ok");
+  banner("Copied " + url, "ok");
   return Promise.resolve();
 }
 
@@ -235,7 +236,7 @@ function showQr(url) {
 }
 
 function requireWallet() {
-  if (!state.session) throw new Error("请先连接钱包 / Connect a wallet first");
+  if (!state.session) throw new Error("Connect a wallet first");
 }
 
 function escapeHtml(value) {
