@@ -43,7 +43,7 @@ Try the live paid invoice at [/pay/1](https://pay.43-167-176-164.sslip.io/pay/1)
 | Pay page (paid) | [pay-paid.png](docs/screenshots/pay-paid.png) |
 | Receipt | [receipt-paid.png](docs/screenshots/receipt-paid.png) |
 
-The invoice rows in the dashboard screenshot are real testnet invoices, rendered from the public API (`GET /api/v1/public/invoices?merchant=…`) because a headless browser has no wallet. No new on-chain transactions were sent to capture these images.
+The live UI is in English. The invoice rows in the dashboard screenshot are real testnet invoices, rendered from the public API (`GET /api/v1/public/invoices?merchant=…`) because a headless browser has no wallet. No new on-chain transactions were sent to capture these images.
 
 ### Architecture
 
@@ -130,7 +130,7 @@ Java 21 / Spring Boot 服务按确认数轮询 `eth_getLogs`，游标持久化�
 
 ### 截图
 
-总览图和各页面截图见 [docs/screenshots](docs/screenshots) 以及上面的英文截图表。后台列表里的发票是测试网上已有的真实发票，通过公开 API 渲染（无头浏览器没有钱包），截图过程中没有发送新的链上交易。
+总览图和各页面截图见 [docs/screenshots](docs/screenshots) 以及上面的英文截图表。线上界面现在是英文。后台列表里的发票是测试网上已有的真实发票，通过公开 API 渲染（无头浏览器没有钱包），截图过程中没有发送新的链上交易。
 
 ### 架构
 
