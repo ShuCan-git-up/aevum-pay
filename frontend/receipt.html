@@ -1,26 +1,28 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aevum Pay · 收据</title>
+  <title>Aevum Pay · Receipt</title>
   <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
 </head>
 <body>
   <div class="wrap">
     <header class="top">
       <a class="brand" href="/">
-        <div class="mark">Ae</div>
+        <div class="mark" aria-hidden="true">AEP</div>
         <div>
-          <h1>付款收据</h1>
+          <h1>Payment receipt</h1>
           <p>Receipt · <span id="network"></span></p>
         </div>
       </a>
     </header>
     <section class="card">
-      <div class="meta" id="body">加载中…</div>
+      <div class="meta" id="body">Loading…</div>
       <div class="actions">
-        <a id="explorer" hidden target="_blank" rel="noreferrer">在浏览器打开交易 / View transaction</a>
+        <a id="explorer" hidden target="_blank" rel="noreferrer">View transaction</a>
       </div>
       <p class="hint" id="note"></p>
     </section>

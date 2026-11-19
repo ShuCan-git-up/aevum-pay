@@ -1,47 +1,50 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aevum Pay · 支付</title>
+  <title>Aevum Pay · Pay</title>
   <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
 </head>
 <body>
   <div class="wrap">
     <header class="top">
       <a class="brand" href="/">
-        <div class="mark">Ae</div>
+        <div class="mark" aria-hidden="true">AEP</div>
         <div>
-          <h1>支付发票</h1>
+          <h1>Pay invoice</h1>
           <p>Pay with tUSD8 · <span id="network"></span></p>
         </div>
       </a>
     </header>
     <div id="banner" class="banner" hidden></div>
     <section class="card pay-hero">
-      <div class="hint">应付金额 / Amount due</div>
+      <div class="hint">Amount due</div>
       <div class="amount" id="amount">—</div>
       <div class="row" style="margin-bottom:14px">
         <span id="status" class="status">…</span>
-        <span class="hint" style="margin:0">已付 <span id="paid">—</span></span>
+        <span class="hint" style="margin:0">Paid <span id="paid">—</span></span>
       </div>
       <div class="meta">
-        <div>商家 / Merchant<strong id="merchant">…</strong></div>
-        <div>付款人 / Payer<strong id="payer">…</strong></div>
-        <div>截止 / Due<strong id="due">…</strong></div>
-        <div>订单 / Order<strong id="order">…</strong></div>
+        <div>Merchant<strong id="merchant" class="mono">…</strong></div>
+        <div>Payer<strong id="payer" class="mono">…</strong></div>
+        <div>Due<strong id="due">…</strong></div>
+        <div>Order<strong id="order">…</strong></div>
       </div>
       <div id="partial-wrap" hidden>
-        <label>本次支付 tUSD8 <span>/ this payment</span></label>
-        <input id="partial" type="text" inputmode="decimal" />
+        <label for="partial">This payment (tUSD8)</label>
+        <input id="partial" type="text" inputmode="decimal" placeholder="e.g. 5" />
       </div>
       <div class="actions">
-        <button id="connect" type="button">连接钱包并支付 / Connect and pay</button>
+        <button id="connect" type="button">Connect wallet and pay</button>
+        <a id="receipt-link" class="text-link" hidden href="">View receipt</a>
       </div>
-      <p class="hint">先授权本次金额的 tUSD8，再调用 pay。钱直接转到商家，不经过平台。</p>
-      <p class="mono" id="tx"></p>
+      <p class="hint">Approve this tUSD8 amount, then call pay. Funds go directly to the merchant, not through the platform.</p>
+      <p class="mono tx-line" id="tx"></p>
     </section>
-    <footer class="note">OKX Wallet 或任何注入的 EIP-1193 钱包。如果没有 Aevum 网络，页面会调用 wallet_addEthereumChain。</footer>
+    <footer class="note">OKX Wallet or any injected EIP-1193 wallet. If Aevum is not added yet, the page will call wallet_addEthereumChain.</footer>
   </div>
   <script src="/vendor/ethers.umd.min.js"></script>
   <script src="/js/app.js"></script>

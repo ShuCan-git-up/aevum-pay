@@ -1,91 +1,93 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aevum Pay · 商家后台</title>
+  <title>Aevum Pay · Merchant</title>
   <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
 </head>
 <body>
   <div class="wrap">
     <header class="top">
       <a class="brand" href="/">
-        <div class="mark">Ae</div>
+        <div class="mark" aria-hidden="true">AEP</div>
         <div>
           <h1>Aevum Pay</h1>
-          <p>发票支付 / Non-custodial tUSD8 invoices</p>
+          <p>Non-custodial tUSD8 invoices</p>
         </div>
       </a>
       <div class="row">
         <div class="pill"><strong id="network">…</strong></div>
-        <div class="pill" id="sync">同步中</div>
-        <button id="connect" type="button">连接 OKX / 钱包</button>
+        <div class="pill" id="sync">Syncing…</div>
+        <button id="connect" type="button">Connect wallet</button>
       </div>
     </header>
-    <p class="hint">合约 <span class="mono" id="contract"></span> · 账户 <span class="mono" id="account">未连接</span></p>
+    <p class="hint">Contract <span class="mono" id="contract"></span> · Account <span class="mono" id="account">Not connected</span></p>
     <div id="banner" class="banner" hidden></div>
     <div class="grid">
       <section class="card">
-        <h2>开一张发票</h2>
-        <p class="hint">用你自己的钱包签名。tUSD8 付款时直接进你的地址，合约不保管资金。</p>
-        <label>金额 tUSD8 <span>/ amount</span></label>
-        <input id="amount" type="text" inputmode="decimal" value="10" />
-        <label>截止时间 <span>/ due</span></label>
+        <h2>Create an invoice</h2>
+        <p class="hint">Sign with your own wallet. tUSD8 is paid straight to your address. The contract never holds funds.</p>
+        <label for="amount">Amount (tUSD8)</label>
+        <input id="amount" type="text" inputmode="decimal" value="10" placeholder="e.g. 10" />
+        <label for="due">Due date</label>
         <input id="due" type="datetime-local" />
-        <label>订单号 <span>/ order id，可空。相同订单号不能重复开票</span></label>
-        <input id="order" type="text" placeholder="ORD-1001" />
-        <label>指定付款人 <span>/ payer，留空则谁都可以付，第一笔锁定</span></label>
-        <input id="payer" type="text" placeholder="0x…" />
-        <label class="check"><input id="partial" type="checkbox" /> 允许分期 / allow partial</label>
-        <div class="actions"><button id="create" type="button">签名并创建 / Create invoice</button></div>
+        <label for="order">Order ID <span>optional · the same ID cannot be issued twice</span></label>
+        <input id="order" type="text" placeholder="e.g. ORDER-2041" autocomplete="off" />
+        <label for="payer">Payer <span>optional · leave empty to allow anyone; the first payment locks the payer</span></label>
+        <input id="payer" type="text" placeholder="e.g. 0x…" autocomplete="off" spellcheck="false" />
+        <label class="check"><input id="partial" type="checkbox" /> Allow partial payments</label>
+        <div class="actions"><button id="create" type="button">Sign and create invoice</button></div>
       </section>
       <section class="card">
-        <h2>后端代开票</h2>
-        <p class="hint">操作员只能替你开票和取消未付款发票。先授权，再用 API Key 让你的系统调用 REST。</p>
-        <p>操作员地址<br /><strong class="mono" id="operator">…</strong></p>
-        <div class="actions"><button id="authorize" class="secondary" type="button">授权操作员 / setOperator</button></div>
-        <label>店铺名 <span>/ shop name</span></label>
-        <input id="shop" type="text" value="我的店铺" />
-        <label>Webhook URL <span>/ 可选</span></label>
+        <h2>Create invoices via API</h2>
+        <p class="hint">The operator can only create invoices and cancel unpaid ones. Authorize it first, then use an API key from your own system.</p>
+        <p>Operator address<br /><strong class="mono" id="operator">…</strong></p>
+        <div class="actions"><button id="authorize" class="secondary" type="button">Authorize operator</button></div>
+        <label for="shop">Store name</label>
+        <input id="shop" type="text" placeholder="Your store name" autocomplete="organization" />
+        <label for="webhook">Webhook URL <span>optional</span></label>
         <input id="webhook" type="url" placeholder="https://merchant.example/hooks/aevum" />
-        <div class="actions"><button id="register" class="secondary" type="button">签名注册并领取 API Key</button></div>
+        <div class="actions"><button id="register" class="secondary" type="button">Sign in and get an API key</button></div>
         <div id="owner-tools" hidden>
           <h2>Owner</h2>
-          <p class="hint">只能暂停和设置不超过 1% 的手续费。不能换币，不能动别人的钱。</p>
+          <p class="hint">You can pause payments and set a fee of at most 1%. You cannot change the settlement token or move anyone else's funds.</p>
           <div class="actions">
-            <button id="pause" class="secondary" type="button">暂停</button>
-            <button id="unpause" class="secondary" type="button">恢复</button>
+            <button id="pause" class="secondary" type="button">Pause</button>
+            <button id="unpause" class="secondary" type="button">Resume</button>
           </div>
-          <label>手续费 bps <span>/ 100 = 1%</span></label>
+          <label for="fee-bps">Fee (bps) <span>100 = 1%</span></label>
           <input id="fee-bps" type="number" min="0" max="100" value="0" />
-          <label>收费地址</label>
-          <input id="fee-to" type="text" placeholder="0x…" />
-          <div class="actions"><button id="set-fee" class="secondary" type="button">设置手续费</button></div>
+          <label for="fee-to">Fee recipient</label>
+          <input id="fee-to" type="text" placeholder="e.g. 0x…" spellcheck="false" />
+          <div class="actions"><button id="set-fee" class="secondary" type="button">Update fee</button></div>
         </div>
       </section>
     </div>
     <section class="card" style="margin-top:16px" id="wallet-tools">
-      <h2>我的发票</h2>
-      <p class="hint">状态来自后端索引，几秒内会跟上链上结果。</p>
+      <h2>My invoices</h2>
+      <p class="hint">Status comes from the indexer and usually catches up within a few seconds.</p>
       <table>
         <thead>
-          <tr><th>ID</th><th>状态</th><th>已付 / 应付</th><th>付款人</th><th></th></tr>
+          <tr><th>ID</th><th>Status</th><th>Paid / due</th><th>Payer</th><th></th></tr>
         </thead>
-        <tbody id="invoices"><tr><td colspan="5">连接钱包后显示。</td></tr></tbody>
+        <tbody id="invoices"><tr><td colspan="5">Connect a wallet to see invoices.</td></tr></tbody>
       </table>
     </section>
-    <footer class="note">Aevum testnet chainId 44005 · 结算币 tUSD8 · 6 位小数 · 非托管 approve + pay</footer>
+    <footer class="note">Aevum testnet · chain ID 44005 · settlement token tUSD8 (6 decimals) · non-custodial approve + pay</footer>
   </div>
   <dialog id="qr-dialog">
-    <h2>支付二维码</h2>
+    <h2>Payment QR code</h2>
     <div id="qr"></div>
     <p class="mono" id="qr-url"></p>
-    <form method="dialog"><button type="submit">关闭</button></form>
+    <form method="dialog"><button type="submit">Close</button></form>
   </dialog>
   <dialog id="secret-dialog">
-    <h2>请马上复制</h2>
+    <h2>Copy these now</h2>
     <pre id="secret" class="mono"></pre>
-    <form method="dialog"><button type="submit">我已保存</button></form>
+    <form method="dialog"><button type="submit">I have saved them</button></form>
   </dialog>
   <script src="/vendor/ethers.umd.min.js"></script>
   <script src="/vendor/qrcode.min.js"></script>
